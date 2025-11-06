@@ -1,4 +1,8 @@
+from msilib.schema import ListView
+
 import flet as ft
+from flet.core.dropdown import Dropdown
+
 from UI.alert import AlertManager
 
 '''
@@ -37,9 +41,42 @@ class View:
 
         # --- Sezione 2: Filtraggio ---
         # TODO
+        self._dd_nomi = Dropdown (label = "Nome Museo",
+                                  options = self.controller.popola_con_musei())
 
+        self._dd_epoche = Dropdown (label = "Epoche",
+                                    options = self.controller.popola_con_epoche(),
+                                    width = 200)
         # Sezione 3: Artefatti
         # TODO
+        self._lst_artefatti = ft.ListView (expand = True,
+                                           controls = [ft.Text ("Seleziona un museo ed un'epoca per iniziare.")])
+
+        def aggiorna_lista_artefatti (e) :
+            self.controller.museo_selezionato = self._dd_nomi.value.strip()
+            self.controller.epoca_selezionata = self._dd_epoche.value.strip()
+
+            lista_artefatti = self.controller.mostra_artefatti(self.controller.museo_selezionato, self.controller.epoca_selezionata)
+
+            dati_artefatti = []
+            if lista_artefatti :
+                for artefatto in lista_artefatti :
+                    dati_artefatti.append(ft.ListTile (title =ft.Text(artefatto.nome)))
+            else :
+                if self.controller.museo_selezionato and self.controller.epoca_selezionata :
+                    dati_artefatti.append (ft.Text ("Nessun risultato trovato."))
+                else :
+                    dati_artefatti.append (ft.Text ("Seleziona entrambi i filtri."))
+
+            self._lst_artefatti.controls = dati_artefatti
+            self._lst_artefatti.update ()
+            self.page.update()
+
+
+        self.btn_mostra_artefatti = ft.ElevatedButton ("Mostra artefatti",
+                                                       on_click= aggiorna_lista_artefatti)
+
+
 
         # --- Toggle Tema ---
         self.toggle_cambia_tema = ft.Switch(label="Tema scuro", value=True, on_change=self.cambia_tema)
@@ -54,9 +91,15 @@ class View:
 
             # Sezione 2: Filtraggio
             # TODO
+            ft.Row (spacing = 100,
+                    controls = [self._dd_nomi, self._dd_epoche],
+                    alignment = ft.MainAxisAlignment.CENTER),
 
             # Sezione 3: Artefatti
             # TODO
+            ft.Divider (),
+            self.btn_mostra_artefatti,
+            self._lst_artefatti,
         )
 
         self.page.scroll = "adaptive"
