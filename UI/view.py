@@ -34,13 +34,13 @@ class View:
     def update(self):
         self.page.update()
 
+
     def load_interface(self):
         """ Crea e aggiunge gli elementi di UI alla pagina e la aggiorna. """
         # --- Sezione 1: Intestazione ---
         self.txt_titolo = ft.Text(value="Musei di Torino", size=38, weight=ft.FontWeight.BOLD)
 
         # --- Sezione 2: Filtraggio ---
-        # TODO
         self._dd_nomi = Dropdown (label = "Nome Museo",
                                   options = self.controller.popola_con_musei())
 
@@ -48,35 +48,62 @@ class View:
                                     options = self.controller.popola_con_epoche(),
                                     width = 200)
         # Sezione 3: Artefatti
-        # TODO
+        self._txt_lista = ft.Text (value = "Lista Artefatti",
+                                   size = 20,
+                                   weight = ft.FontWeight.BOLD)
+
         self._lst_artefatti = ft.ListView (expand = True,
                                            controls = [ft.Text ("Seleziona un museo ed un'epoca per iniziare.")])
 
-        def aggiorna_lista_artefatti (e) :
-            self.controller.museo_selezionato = self._dd_nomi.value.strip()
-            self.controller.epoca_selezionata = self._dd_epoche.value.strip()
+        def aggiorna_lista_artefatti(e):
+            self.controller.museo_selezionato = self._dd_nomi.value
+            self.controller.epoca_selezionata = self._dd_epoche.value
 
-            lista_artefatti = self.controller.mostra_artefatti(self.controller.museo_selezionato, self.controller.epoca_selezionata)
+            lista_artefatti = self.controller.mostra_artefatti(self.controller.museo_selezionato,
+                                                               self.controller.epoca_selezionata)
+
+            lista_artefatti_per_museo = self.controller.mostra_artefatti_per_museo(self.controller.museo_selezionato)
+            lista_artefatti_per_epoca = self.controller.mostra_artefatti_per_epoca(self.controller.epoca_selezionata)
+
+            tutti_artefatti = self.controller.mostra_tutti_artefatti()
 
             dati_artefatti = []
-            if lista_artefatti :
-                for artefatto in lista_artefatti :
-                    dati_artefatti.append(ft.ListTile (title =ft.Text(artefatto.nome)))
-            else :
-                if self.controller.museo_selezionato and self.controller.epoca_selezionata :
-                    dati_artefatti.append (ft.Text ("Nessun risultato trovato."))
-                else :
-                    dati_artefatti.append (ft.Text ("Seleziona entrambi i filtri."))
+            if lista_artefatti:
+                for artefatto in lista_artefatti:
+                    dati_artefatti.append(ft.ListTile(title=ft.Text(artefatto.nome)))
+                    self._txt_lista.value = f"Lista Artefatti {self.controller.museo_selezionato}, {self.controller.epoca_selezionata}"
+            else:
+                if self.controller.museo_selezionato and self.controller.epoca_selezionata:
+                    dati_artefatti.append(ft.Text("Nessun risultato trovato."))
+                    self._txt_lista.value = f"Lista Artefatti {self.controller.museo_selezionato}, {self.controller.epoca_selezionata}"
+
+                elif self.controller.museo_selezionato and not self.controller.epoca_selezionata:
+                    for artefatto in lista_artefatti_per_museo:
+                        dati_artefatti.append(ft.ListTile(title=ft.Text(artefatto)))
+                        self._txt_lista.value = f"Lista Artefatti {self.controller.museo_selezionato}"
+
+                elif self.controller.epoca_selezionata and not self.controller.museo_selezionato:
+                    for artefatto in lista_artefatti_per_epoca:
+                        dati_artefatti.append(ft.ListTile(title=ft.Text(artefatto)))
+                        self._txt_lista.value = f"Lista Artefatti {self.controller.epoca_selezionata}"
+
+                elif not self.controller.museo_selezionato and not self.controller.epoca_selezionata:
+                    for artefatto in tutti_artefatti:
+                        dati_artefatti.append(ft.ListTile(title=ft.Text(artefatto)))
+                        self._txt_lista.value = f"Lista Artefatti"
 
             self._lst_artefatti.controls = dati_artefatti
             self._lst_artefatti.update ()
+            self._txt_lista.update ()
+
+            self._dd_nomi.value = None
+            self._dd_epoche.value = None
+
             self.page.update()
 
 
         self.btn_mostra_artefatti = ft.ElevatedButton ("Mostra artefatti",
                                                        on_click= aggiorna_lista_artefatti)
-
-
 
         # --- Toggle Tema ---
         self.toggle_cambia_tema = ft.Switch(label="Tema scuro", value=True, on_change=self.cambia_tema)
@@ -90,15 +117,14 @@ class View:
             ft.Divider(),
 
             # Sezione 2: Filtraggio
-            # TODO
             ft.Row (spacing = 100,
                     controls = [self._dd_nomi, self._dd_epoche],
                     alignment = ft.MainAxisAlignment.CENTER),
 
             # Sezione 3: Artefatti
-            # TODO
             ft.Divider (),
             self.btn_mostra_artefatti,
+            self._txt_lista,
             self._lst_artefatti,
         )
 
